@@ -3,13 +3,13 @@
 
 using Microsoft.Net.Http.Headers;
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.OutputCaching.Policies;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOutputCaching(options =>
 {
-    // We might need a way to apply request policies by pattern, for instance changing VaryByQuery for a specific route 
-    options.RequestPolicies.Add(new VaryByQueryPolicy("culture"));
+    options.RequestPolicies.Add(new VaryByQueryPolicy("culture").Map("/query"));
 });
 
 var app = builder.Build();

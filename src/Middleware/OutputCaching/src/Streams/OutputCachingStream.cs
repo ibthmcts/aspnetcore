@@ -3,7 +3,7 @@
 
 namespace Microsoft.AspNetCore.OutputCaching;
 
-internal class ResponseCachingStream : Stream
+internal class OutputCachingStream : Stream
 {
     private readonly Stream _innerStream;
     private readonly long _maxBufferSize;
@@ -11,7 +11,7 @@ internal class ResponseCachingStream : Stream
     private readonly SegmentWriteStream _segmentWriteStream;
     private readonly Action _startResponseCallback;
 
-    internal ResponseCachingStream(Stream innerStream, long maxBufferSize, int segmentSize, Action startResponseCallback)
+    internal OutputCachingStream(Stream innerStream, long maxBufferSize, int segmentSize, Action startResponseCallback)
     {
         _innerStream = innerStream;
         _maxBufferSize = maxBufferSize;

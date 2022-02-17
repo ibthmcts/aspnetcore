@@ -71,7 +71,7 @@ public class OutputCachingContext : IOutputCachingContext
 
     internal Stream OriginalResponseStream { get; set; }
 
-    internal ResponseCachingStream ResponseCachingStream { get; set; }
+    internal OutputCachingStream ResponseCachingStream { get; set; }
 
     public IHeaderDictionary CachedResponseHeaders { get; set; }
 

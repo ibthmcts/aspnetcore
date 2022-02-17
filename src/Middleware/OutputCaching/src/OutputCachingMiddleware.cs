@@ -285,13 +285,9 @@ public class OutputCachingMiddleware
             {
                 _logger.VaryByRulesUpdated(normalizedVaryHeaders.ToString(), normalizedVaryQueryKeys.ToString());
             }
+        }
 
-            context.CacheKey = _keyProvider.CreateStorageVaryByKey(context);
-        }
-        else
-        {
-            context.CacheKey = _keyProvider.CreateBaseKey(context);
-        }
+        context.CacheKey = _keyProvider.CreateStorageVaryByKey(context);
     }
 
     /// <summary>
@@ -421,7 +417,7 @@ public class OutputCachingMiddleware
     {
         // Shim response stream
         context.OriginalResponseStream = context.HttpContext.Response.Body;
-        context.ResponseCachingStream = new ResponseCachingStream(
+        context.ResponseCachingStream = new OutputCachingStream(
             context.OriginalResponseStream,
             _options.MaximumBodySize,
             StreamUtilities.BodySegmentSize,

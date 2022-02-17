@@ -9,7 +9,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Microsoft.AspNetCore.OutputCaching;
 
-internal class OutputCachingKeyProvider : IOutputCachingKeyProvider
+internal sealed class OutputCachingKeyProvider : IOutputCachingKeyProvider
 {
     // Use the record separator for delimiting components of the cache key to avoid possible collisions
     private const char KeyDelimiter = '\x1e';
@@ -34,12 +34,18 @@ internal class OutputCachingKeyProvider : IOutputCachingKeyProvider
         _options = options.Value;
     }
 
-    // GET<delimiter>SCHEME<delimiter>HOST:PORT/PATHBASE/PATH
-    public string CreateBaseKey(OutputCachingContext context)
+    // GET<delimiter>SCHEME<delimiter>HOST:PORT/PATHBASE/PATH<delimiter>H<delimiter>HeaderName=HeaderValue<delimiter>Q<delimiter>QueryName=QueryValue1<subdelimiter>QueryValue2
+    public string CreateStorageVaryByKey(OutputCachingContext context)
     {
         if (context == null)
         {
             throw new ArgumentNullException(nameof(context));
+        }
+
+        var varyByRules = context.CachedVaryByRules;
+        if (varyByRules == null)
+        {
+            throw new InvalidOperationException($"{nameof(CachedVaryByRules)} must not be null on the {nameof(OutputCachingContext)}");
         }
 
         var request = context.HttpContext.Request;
@@ -67,33 +73,6 @@ internal class OutputCachingKeyProvider : IOutputCachingKeyProvider
                     .AppendUpperInvariant(request.Path.Value);
             }
 
-            return builder.ToString();
-        }
-        finally
-        {
-            _builderPool.Return(builder);
-        }
-    }
-
-    // BaseKey<delimiter>H<delimiter>HeaderName=HeaderValue<delimiter>Q<delimiter>QueryName=QueryValue1<subdelimiter>QueryValue2
-    public string CreateStorageVaryByKey(OutputCachingContext context)
-    {
-        if (context == null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
-
-        var varyByRules = context.CachedVaryByRules;
-        if (varyByRules == null)
-        {
-            throw new InvalidOperationException($"{nameof(CachedVaryByRules)} must not be null on the {nameof(OutputCachingContext)}");
-        }
-
-        var request = context.HttpContext.Request;
-        var builder = _builderPool.Get();
-
-        try
-        {
             // Vary by prefix and custom
             var prefixCount = varyByRules?.VaryByPrefix.Count ?? 0;
             if (prefixCount > 0)
