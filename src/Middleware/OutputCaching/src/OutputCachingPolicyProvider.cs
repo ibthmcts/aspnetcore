@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 namespace Microsoft.AspNetCore.OutputCaching;
@@ -19,6 +20,23 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
         foreach (var policy in options.RequestPolicies)
         {
             await policy.OnRequestAsync(context);
+        }
+
+        var policiesMedata = context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<IPoliciesMetadata>();
+
+        if (policiesMedata != null)
+        {
+            // TODO: Log only?
+
+            if (context.HttpContext.Response.HasStarted)
+            {
+                throw new InvalidOperationException("Can't define output caching policies after headers have been sent to client.");
+            }
+
+            foreach (var policy in policiesMedata.RequestPolicies)
+            {
+                await policy.OnRequestAsync(context);
+            }
         }
     }
 
@@ -40,6 +58,16 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
                 await policy.OnServeFromCacheAsync(context);
             }
         }
+
+        var policiesMedata = context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<IPoliciesMetadata>();
+
+        if (policiesMedata != null)
+        {
+            foreach (var policy in policiesMedata.ResponsePolicies)
+            {
+                await policy.OnServeFromCacheAsync(context);
+            }
+        }
     }
 
     public async Task OnServeResponseAsync(IOutputCachingContext context)
@@ -56,6 +84,16 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
         if (responsePolicies != null)
         {
             foreach (var policy in responsePolicies)
+            {
+                await policy.OnServeResponseAsync(context);
+            }
+        }
+
+        var policiesMedata = context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<IPoliciesMetadata>();
+
+        if (policiesMedata != null)
+        {
+            foreach (var policy in policiesMedata.ResponsePolicies)
             {
                 await policy.OnServeResponseAsync(context);
             }

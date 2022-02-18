@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOutputCaching(options =>
 {
-    options.RequestPolicies.Add(new VaryByQueryPolicy("culture").Map("/query"));
+    // options.RequestPolicies.Add(new VaryByQueryPolicy("culture").Map("/query"));
 });
 
 var app = builder.Build();
@@ -22,22 +22,25 @@ app.MapGet("/", () => "Hello " + DateTime.UtcNow.ToString("o"));
 // Cached because default policy
 app.MapGet("/nocache", async context =>
 {
-    context.Features.Get<IOutputCachingFeature>().ResponsePolicies.Add(new NoCachingPolicy());
+    //context.Features.Get<IOutputCachingFeature>().ResponsePolicies.Add(new NoCachingPolicy());
     await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
-});
+}).WithOutputCachingPolicy(
+        new NoCachingPolicy()
+    );
 
 // Cached because Response Caching policy and contains "Cache-Control: public"
 app.MapGet("/headers", async context =>
 {
-    context.Features.Get<IOutputCachingFeature>().ResponsePolicies.Add(new ResponseCachingPolicy());
+    //context.Features.Get<IOutputCachingFeature>().ResponsePolicies.Add(new ResponseCachingPolicy());
     context.Response.Headers.CacheControl = CacheControlHeaderValue.PublicString;
     await context.Response.WriteAsync("Headers " + DateTime.UtcNow.ToString("o"));
-});
+}).WithOutputCachingPolicy(
+        new ResponseCachingPolicy()
+    );
 
-// Cached because Response Caching policy and contains "Cache-Control: public"
 app.MapGet("/query", async context =>
 {
     await context.Response.WriteAsync($"Culture: {context.Request.Query["culture"]} {DateTime.UtcNow.ToString("o")}");
-});
+}).OutputCacheVaryByQuery("culture");
 
 await app.RunAsync();

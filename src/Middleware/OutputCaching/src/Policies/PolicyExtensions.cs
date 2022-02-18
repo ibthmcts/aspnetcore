@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System.Linq;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
 namespace Microsoft.AspNetCore.OutputCaching.Policies;
@@ -48,5 +49,43 @@ public static class PolicyExtensions
             var match = methods.Any(m => context.HttpContext.Request.Method.ToUpperInvariant() == m);
             return Task.FromResult(match);
         }, policy);
+    }
+
+    public static TBuilder WithOutputCachingPolicy<TBuilder>(this TBuilder builder, params IOutputCachingRequestPolicy[] items) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder, nameof(builder));
+        ArgumentNullException.ThrowIfNull(items, nameof(items));
+
+        var policiesMetadata = new PoliciesMetadata();
+        policiesMetadata.RequestPolicies.AddRange(items);
+
+        builder.Add(endpointBuilder =>
+        {
+            endpointBuilder.Metadata.Add(policiesMetadata);
+        });
+        return builder;
+    }
+
+    public static TBuilder WithOutputCachingPolicy<TBuilder>(this TBuilder builder, params IOutputCachingResponsePolicy[] items) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder, nameof(builder));
+        ArgumentNullException.ThrowIfNull(items, nameof(items));
+
+        var policiesMetadata = new PoliciesMetadata();
+        policiesMetadata.ResponsePolicies.AddRange(items);
+
+        builder.Add(endpointBuilder =>
+        {
+            endpointBuilder.Metadata.Add(policiesMetadata);
+        });
+        return builder;
+    }
+
+    public static TBuilder OutputCacheVaryByQuery<TBuilder>(this TBuilder builder, params string[] queryKeys) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder, nameof(builder));
+        ArgumentNullException.ThrowIfNull(queryKeys, nameof(queryKeys));
+
+        return builder.WithOutputCachingPolicy(queryKeys.Select( q => new VaryByQueryPolicy(q)).ToArray());
     }
 }

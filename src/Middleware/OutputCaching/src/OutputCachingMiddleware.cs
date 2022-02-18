@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.OutputCaching.Policies;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
@@ -64,30 +65,12 @@ public class OutputCachingMiddleware
         IOutputCache cache,
         IOutputCachingKeyProvider keyProvider)
     {
-        if (next == null)
-        {
-            throw new ArgumentNullException(nameof(next));
-        }
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
-        if (loggerFactory == null)
-        {
-            throw new ArgumentNullException(nameof(loggerFactory));
-        }
-        if (policyProvider == null)
-        {
-            throw new ArgumentNullException(nameof(policyProvider));
-        }
-        if (cache == null)
-        {
-            throw new ArgumentNullException(nameof(cache));
-        }
-        if (keyProvider == null)
-        {
-            throw new ArgumentNullException(nameof(keyProvider));
-        }
+        ArgumentNullException.ThrowIfNull(next, nameof(next));
+        ArgumentNullException.ThrowIfNull(options, nameof(options));
+        ArgumentNullException.ThrowIfNull(loggerFactory, nameof(loggerFactory));
+        ArgumentNullException.ThrowIfNull(policyProvider, nameof(policyProvider));
+        ArgumentNullException.ThrowIfNull(cache, nameof(cache));
+        ArgumentNullException.ThrowIfNull(keyProvider, nameof(keyProvider));
 
         _next = next;
         _options = options.Value;
@@ -169,6 +152,8 @@ public class OutputCachingMiddleware
         var cachedEntryAge = context.ResponseTime.Value - context.CachedResponse.Created;
         context.CachedEntryAge = cachedEntryAge > TimeSpan.Zero ? cachedEntryAge : TimeSpan.Zero;
 
+        await _policyProvider.OnServeFromCacheAsync(context);
+
         if (context.IsCacheEntryFresh)
         {
             // Check conditional request rules
@@ -237,8 +222,6 @@ public class OutputCachingMiddleware
 
         if (cacheEntry != null)
         {
-            await _policyProvider.OnServeFromCacheAsync(context);
-
             if (await TryServeCachedResponseAsync(context, cacheEntry))
             {
                 return true;
