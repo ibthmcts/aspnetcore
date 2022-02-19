@@ -15,6 +15,10 @@ public interface IOutputCachingContext
     DateTimeOffset? ResponseExpires { get; }
     TimeSpan? ResponseSharedMaxAge { get; }
     TimeSpan? ResponseMaxAge { get; }
+    /// <summary>
+    /// The custom expiration timespan for the response
+    /// </summary>
+    public TimeSpan? ResponseExpirationTimeSpan { get; set; }
     IHeaderDictionary CachedResponseHeaders { get; }
     CachedVaryByRules CachedVaryByRules { get; }
     ILogger Logger { get; }
@@ -33,6 +37,11 @@ public interface IOutputCachingContext
     /// Determine whether storage of the response is allowed for the incoming HTTP request.
     /// </summary>
     bool AllowCacheStorage { get; set; }
+
+    /// <summary>
+    /// Determine whether request should be locked.
+    /// </summary>
+    bool AllowLocking { get; set; }
 
     /// <summary>
     /// Determine whether the response received by the middleware can be cached for future requests.

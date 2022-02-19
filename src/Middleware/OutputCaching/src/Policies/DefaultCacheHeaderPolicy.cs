@@ -13,6 +13,7 @@ public class DefaultCacheHeaderPolicy : IOutputCachingRequestPolicy, IOutputCach
         context.AttemptResponseCaching = true;
         context.AllowCacheLookup = true;
         context.AllowCacheStorage = true;
+        context.AllowLocking = true;
         context.IsResponseCacheable = true;
 
         // Vary by any query by default

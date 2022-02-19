@@ -42,6 +42,11 @@ public class OutputCachingContext : IOutputCachingContext
     public bool AllowCacheStorage { get; set; }
 
     /// <summary>
+    /// Determine whether request should be locked.
+    /// </summary>
+    public bool AllowLocking { get; set; }
+
+    /// <summary>
     /// Determine whether the response received by the middleware can be cached for future requests.
     /// </summary>
     public bool IsResponseCacheable { get; set; }
@@ -74,6 +79,8 @@ public class OutputCachingContext : IOutputCachingContext
     internal OutputCachingStream ResponseCachingStream { get; set; }
 
     public IHeaderDictionary CachedResponseHeaders { get; set; }
+
+    public TimeSpan? ResponseExpirationTimeSpan { get; set; }
 
     public DateTimeOffset? ResponseDate
     {

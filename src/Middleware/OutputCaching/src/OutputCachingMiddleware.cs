@@ -2,7 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.OutputCaching.Policies;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
@@ -29,6 +28,8 @@ public class OutputCachingMiddleware
     private readonly IOutputCachingPolicyProvider _policyProvider;
     private readonly IOutputCache _cache;
     private readonly IOutputCachingKeyProvider _keyProvider;
+    private readonly WorkDispatcher<string, OutputCacheEntry?> _outputCacheEntryDispatcher;
+    private readonly WorkDispatcher<string, OutputCacheEntry?> _requestDispatcher;
 
     /// <summary>
     /// Creates a new <see cref="OutputCachingMiddleware"/>.
@@ -78,6 +79,8 @@ public class OutputCachingMiddleware
         _policyProvider = policyProvider;
         _cache = cache;
         _keyProvider = keyProvider;
+        _outputCacheEntryDispatcher = new();
+        _requestDispatcher = new();
     }
 
     /// <summary>
@@ -92,50 +95,90 @@ public class OutputCachingMiddleware
         // Add IResponseCachingFeature
         AddOutputCachingFeature(context.HttpContext);
 
-        await _policyProvider.OnRequestAsync(context);
-
-        // Should we attempt any caching logic?
-        if (context.AttemptResponseCaching)
-        {
-            // Can this request be served from cache?
-            if (context.AllowCacheLookup && await TryServeFromCacheAsync(context))
-            {
-                return;
-            }
-
-            // Should we store the response to this request?
-            if (context.AllowCacheStorage)
-            {
-                // Hook up to listen to the response stream
-                ShimResponseStream(context);
-
-                try
-                {
-                    await _next(httpContext);
-
-                    // The next middleware might change the policy
-                    await _policyProvider.OnServeResponseAsync(context);
-
-                    // If there was no response body, check the response headers now. We can cache things like redirects.
-                    StartResponse(context);
-
-                    // Finalize the cache entry
-                    FinalizeCacheBody(context);
-                }
-                finally
-                {
-                    UnshimResponseStream(context);
-                }
-
-                return;
-            }
-        }
-
-        // Response should not be captured but add IOutputCachingFeature which may be required when the response is generated
-        AddOutputCachingFeature(httpContext);
-
         try
         {
+            await _policyProvider.OnRequestAsync(context);
+
+            // Should we attempt any caching logic?
+            if (context.AttemptResponseCaching)
+            {
+                // Can this request be served from cache?
+                if (context.AllowCacheLookup)
+                {
+                    CreateCacheKey(context);
+
+                    // Locking cache lookups by default
+                    // TODO: should it be part of the cache implementations or can we assume all caches would benefit from it?
+                    // It makes sense for caches that use IO (disk, network) or need to deserialize the state but could also be a global option
+
+                    var cacheEntry = await _outputCacheEntryDispatcher.ScheduleAsync(context.CacheKey, _cache, static (key, cache) => Task.FromResult(cache.Get(key)));
+
+                    if (await TryServeFromCacheAsync(context, cacheEntry))
+                    {
+                        return;
+                    }
+                }
+
+                // Should we store the response to this request?
+                if (context.AllowCacheStorage)
+                {
+                    // It is also a pre-condition to reponse locking
+
+                    while (true)
+                    {
+                        var executed = false;
+
+                        if (context.AllowLocking)
+                        {
+                            var cacheEntry = await _requestDispatcher.ScheduleAsync(context.CacheKey, key => ExecuteResponseAsync());
+
+                            // If the result was processed by another request, serve it from cache
+                            if (!executed)
+                            {
+                                if (await TryServeFromCacheAsync(context, cacheEntry))
+                                {
+                                    return;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            await ExecuteResponseAsync();
+                        }
+
+                        async Task<OutputCacheEntry?> ExecuteResponseAsync()
+                        {
+                            // Hook up to listen to the response stream
+                            ShimResponseStream(context);
+
+                            try
+                            {
+                                await _next(httpContext);
+
+                                // The next middleware might change the policy
+                                await _policyProvider.OnServeResponseAsync(context);
+
+                                // If there was no response body, check the response headers now. We can cache things like redirects.
+                                StartResponse(context);
+
+                                // Finalize the cache entry
+                                FinalizeCacheBody(context);
+
+                                executed = true;
+                            }
+                            finally
+                            {
+                                UnshimResponseStream(context);
+                            }
+
+                            return context.CachedResponse;
+                        }
+
+                        return;
+                    }
+                }
+            }
+
             await _next(httpContext);
         }
         finally
@@ -209,16 +252,8 @@ public class OutputCachingMiddleware
         return false;
     }
 
-    internal async Task<bool> TryServeFromCacheAsync(OutputCachingContext context)
+    internal async Task<bool> TryServeFromCacheAsync(OutputCachingContext context, OutputCacheEntry? cacheEntry)
     {
-        CreateCacheKey(context);
-
-        if (String.IsNullOrEmpty(context.CacheKey))
-        {
-            throw new InvalidOperationException("Cache key must be defined");
-        }
-
-        var cacheEntry = _cache.Get(context.CacheKey);
 
         if (cacheEntry != null)
         {
@@ -288,6 +323,7 @@ public class OutputCachingMiddleware
             context.CachedResponseValidFor = context.ResponseSharedMaxAge ??
                 context.ResponseMaxAge ??
                 (context.ResponseExpires - context.ResponseTime!.Value) ??
+                context.ResponseExpirationTimeSpan ??
                 DefaultExpirationTimeSpan;
 
             // Ensure date header is set
