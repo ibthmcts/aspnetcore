@@ -5,7 +5,5 @@ namespace Microsoft.AspNetCore.OutputCaching;
 
 public interface IPoliciesMetadata
 {
-    List<IOutputCachingRequestPolicy> RequestPolicies { get; }
-
-    List<IOutputCachingResponsePolicy> ResponsePolicies { get; }
+    List<IOutputCachingPolicy> Policies { get; }
 }

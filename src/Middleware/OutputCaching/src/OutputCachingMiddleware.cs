@@ -42,8 +42,7 @@ public class OutputCachingMiddleware
         RequestDelegate next,
         IOptions<OutputCachingOptions> options,
         ILoggerFactory loggerFactory,
-        ObjectPoolProvider poolProvider,
-        IEnumerable<IOutputCachingRequestPolicy> requestPolicies
+        ObjectPoolProvider poolProvider
         )
         : this(
             next,
@@ -254,7 +253,6 @@ public class OutputCachingMiddleware
 
     internal async Task<bool> TryServeFromCacheAsync(OutputCachingContext context, OutputCacheEntry? cacheEntry)
     {
-
         if (cacheEntry != null)
         {
             if (await TryServeCachedResponseAsync(context, cacheEntry))

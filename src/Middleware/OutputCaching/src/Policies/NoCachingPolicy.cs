@@ -6,7 +6,7 @@ namespace Microsoft.AspNetCore.OutputCaching;
 /// <summary>
 /// A policy that prevents caching
 /// </summary>
-public class NoCachingPolicy : IOutputCachingResponsePolicy
+public class NoCachingPolicy : IOutputCachingPolicy
 {
 
     public Task OnServeResponseAsync(IOutputCachingContext context)
@@ -17,6 +17,11 @@ public class NoCachingPolicy : IOutputCachingResponsePolicy
     }
 
     public Task OnServeFromCacheAsync(IOutputCachingContext context)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task OnRequestAsync(IOutputCachingContext context)
     {
         return Task.CompletedTask;
     }

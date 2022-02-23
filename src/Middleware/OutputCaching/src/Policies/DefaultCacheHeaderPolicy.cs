@@ -1,16 +1,19 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Primitives;
+
 namespace Microsoft.AspNetCore.OutputCaching;
 
 /// <summary>
 /// Default policy.
 /// </summary>
-public class DefaultCacheHeaderPolicy : IOutputCachingRequestPolicy, IOutputCachingResponsePolicy
+public class DefaultCacheHeaderPolicy : IOutputCachingPolicy
 {
     public Task OnRequestAsync(IOutputCachingContext context)
     {
-        context.AttemptResponseCaching = true;
+        context.AttemptResponseCaching = AttemptOutputCaching(context);
         context.AllowCacheLookup = true;
         context.AllowCacheStorage = true;
         context.AllowLocking = true;
@@ -32,5 +35,26 @@ public class DefaultCacheHeaderPolicy : IOutputCachingRequestPolicy, IOutputCach
     {
         context.IsResponseCacheable = true;
         return Task.CompletedTask;
+    }
+
+    private static bool AttemptOutputCaching(IOutputCachingContext context)
+    {
+        var request = context.HttpContext.Request;
+
+        // Verify the method
+        if (!HttpMethods.IsGet(request.Method) && !HttpMethods.IsHead(request.Method))
+        {
+            context.Logger.RequestMethodNotCacheable(request.Method);
+            return false;
+        }
+
+        // Verify existence of authorization headers
+        if (!StringValues.IsNullOrEmpty(request.Headers.Authorization))
+        {
+            context.Logger.RequestWithAuthorizationNotCacheable();
+            return false;
+        }
+
+        return true;
     }
 }

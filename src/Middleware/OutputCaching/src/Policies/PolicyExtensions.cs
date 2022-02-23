@@ -8,12 +8,12 @@ using Microsoft.AspNetCore.Http;
 namespace Microsoft.AspNetCore.OutputCaching.Policies;
 public static class PolicyExtensions
 {
-    public static PredicatePolicy When(this IOutputCachingRequestPolicy policy, Func<IOutputCachingContext, Task<bool>> predicate)
+    public static PredicatePolicy When(this IOutputCachingPolicy policy, Func<IOutputCachingContext, Task<bool>> predicate)
     {
         return new PredicatePolicy(predicate, policy);
     }
 
-    public static PredicatePolicy Map(this IOutputCachingRequestPolicy policy, PathString pathBase)
+    public static PredicatePolicy Map(this IOutputCachingPolicy policy, PathString pathBase)
     {
         return new PredicatePolicy(context =>
         {
@@ -22,7 +22,7 @@ public static class PolicyExtensions
         }, policy);
     }
 
-    public static PredicatePolicy Map(this IOutputCachingRequestPolicy policy, params PathString[] pathBases)
+    public static PredicatePolicy Map(this IOutputCachingPolicy policy, params PathString[] pathBases)
     {
         return new PredicatePolicy(context =>
         {
@@ -31,7 +31,7 @@ public static class PolicyExtensions
         }, policy);
     }
 
-    public static PredicatePolicy Methods(this IOutputCachingRequestPolicy policy, string method)
+    public static PredicatePolicy Methods(this IOutputCachingPolicy policy, string method)
     {
         return new PredicatePolicy(context =>
         {
@@ -41,7 +41,7 @@ public static class PolicyExtensions
         }, policy);
     }
 
-    public static PredicatePolicy Methods(this IOutputCachingRequestPolicy policy, params string[] methods)
+    public static PredicatePolicy Methods(this IOutputCachingPolicy policy, params string[] methods)
     {
         return new PredicatePolicy(context =>
         {
@@ -51,28 +51,13 @@ public static class PolicyExtensions
         }, policy);
     }
 
-    public static TBuilder WithOutputCachingPolicy<TBuilder>(this TBuilder builder, params IOutputCachingRequestPolicy[] items) where TBuilder : IEndpointConventionBuilder
+    public static TBuilder WithOutputCachingPolicy<TBuilder>(this TBuilder builder, params IOutputCachingPolicy[] items) where TBuilder : IEndpointConventionBuilder
     {
         ArgumentNullException.ThrowIfNull(builder, nameof(builder));
         ArgumentNullException.ThrowIfNull(items, nameof(items));
 
         var policiesMetadata = new PoliciesMetadata();
-        policiesMetadata.RequestPolicies.AddRange(items);
-
-        builder.Add(endpointBuilder =>
-        {
-            endpointBuilder.Metadata.Add(policiesMetadata);
-        });
-        return builder;
-    }
-
-    public static TBuilder WithOutputCachingPolicy<TBuilder>(this TBuilder builder, params IOutputCachingResponsePolicy[] items) where TBuilder : IEndpointConventionBuilder
-    {
-        ArgumentNullException.ThrowIfNull(builder, nameof(builder));
-        ArgumentNullException.ThrowIfNull(items, nameof(items));
-
-        var policiesMetadata = new PoliciesMetadata();
-        policiesMetadata.ResponsePolicies.AddRange(items);
+        policiesMetadata.Policies.AddRange(items);
 
         builder.Add(endpointBuilder =>
         {

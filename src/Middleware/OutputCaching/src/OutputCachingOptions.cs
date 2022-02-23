@@ -28,9 +28,8 @@ public class OutputCachingOptions
     /// </summary>
     public bool UseCaseSensitivePaths { get; set; }
 
-    public List<IOutputCachingRequestPolicy> RequestPolicies { get; } = new() { new DefaultCacheHeaderPolicy() };
+    public List<IOutputCachingPolicy> Policies { get; } = new() { new DefaultCacheHeaderPolicy() };
 
-    public List<IOutputCachingResponsePolicy> ResponsePolicies { get; } = new() { new DefaultCacheHeaderPolicy() };
 
     /// <summary>
     /// For testing purposes only.

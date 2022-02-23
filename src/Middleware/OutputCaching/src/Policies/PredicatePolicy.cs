@@ -2,14 +2,14 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 namespace Microsoft.AspNetCore.OutputCaching.Policies;
-public class PredicatePolicy : IOutputCachingRequestPolicy
+public class PredicatePolicy : IOutputCachingPolicy
 {
     // TODO: Accept a non async predicate too?
 
     private readonly Func<IOutputCachingContext, Task<bool>> _predicate;
-    private readonly IOutputCachingRequestPolicy _policy;
+    private readonly IOutputCachingPolicy _policy;
 
-    public PredicatePolicy(Func<IOutputCachingContext, Task<bool>> predicate, IOutputCachingRequestPolicy policy)
+    public PredicatePolicy(Func<IOutputCachingContext, Task<bool>> predicate, IOutputCachingPolicy policy)
     {
         _predicate = predicate;
         _policy = policy;
@@ -36,12 +36,22 @@ public class PredicatePolicy : IOutputCachingRequestPolicy
 
         return Awaited(task, _policy, context);
 
-        async static Task Awaited(Task<bool> task, IOutputCachingRequestPolicy policy, IOutputCachingContext context)
+        async static Task Awaited(Task<bool> task, IOutputCachingPolicy policy, IOutputCachingContext context)
         {
             if (await task)
             {
                 await policy.OnRequestAsync(context);
             }
         }
+    }
+
+    public Task OnServeFromCacheAsync(IOutputCachingContext context)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task OnServeResponseAsync(IOutputCachingContext context)
+    {
+        return Task.CompletedTask;
     }
 }

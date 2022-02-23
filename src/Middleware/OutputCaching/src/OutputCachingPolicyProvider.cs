@@ -17,7 +17,7 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
 
     public async Task OnRequestAsync(IOutputCachingContext context)
     {
-        foreach (var policy in options.RequestPolicies)
+        foreach (var policy in options.Policies)
         {
             await policy.OnRequestAsync(context);
         }
@@ -33,7 +33,7 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
                 throw new InvalidOperationException("Can't define output caching policies after headers have been sent to client.");
             }
 
-            foreach (var policy in policiesMedata.RequestPolicies)
+            foreach (var policy in policiesMedata.Policies)
             {
                 await policy.OnRequestAsync(context);
             }
@@ -42,14 +42,14 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
 
     public async Task OnServeFromCacheAsync(IOutputCachingContext context)
     {
-        foreach (var policy in options.ResponsePolicies)
+        foreach (var policy in options.Policies)
         {
             await policy.OnServeFromCacheAsync(context);
         }
 
         // Apply response policies defined on the feature, e.g. from action attributes
 
-        var responsePolicies = context.HttpContext.Features.Get<IOutputCachingFeature>()?.ResponsePolicies;
+        var responsePolicies = context.HttpContext.Features.Get<IOutputCachingFeature>()?.Policies;
 
         if (responsePolicies != null)
         {
@@ -63,7 +63,7 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
 
         if (policiesMedata != null)
         {
-            foreach (var policy in policiesMedata.ResponsePolicies)
+            foreach (var policy in policiesMedata.Policies)
             {
                 await policy.OnServeFromCacheAsync(context);
             }
@@ -72,14 +72,14 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
 
     public async Task OnServeResponseAsync(IOutputCachingContext context)
     {
-        foreach (var policy in options.ResponsePolicies)
+        foreach (var policy in options.Policies)
         {
             await policy.OnServeResponseAsync(context);
         }
 
         // Apply response policies defined on the feature, e.g. from action attributes
 
-        var responsePolicies = context.HttpContext.Features.Get<IOutputCachingFeature>()?.ResponsePolicies;
+        var responsePolicies = context.HttpContext.Features.Get<IOutputCachingFeature>()?.Policies;
 
         if (responsePolicies != null)
         {
@@ -93,7 +93,7 @@ internal class OutputCachingPolicyProvider : IOutputCachingPolicyProvider
 
         if (policiesMedata != null)
         {
-            foreach (var policy in policiesMedata.ResponsePolicies)
+            foreach (var policy in policiesMedata.Policies)
             {
                 await policy.OnServeResponseAsync(context);
             }

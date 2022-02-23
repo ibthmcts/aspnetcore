@@ -10,8 +10,20 @@ namespace Microsoft.AspNetCore.OutputCaching;
 /// <summary>
 /// Provides the policy implemented by Response caching
 /// </summary>
-public class ResponseCachingPolicy : IOutputCachingResponsePolicy
+public class ResponseCachingPolicy : IOutputCachingPolicy
 {
+    public Task OnRequestAsync(IOutputCachingContext context)
+    {
+        context.AttemptResponseCaching = AttemptOutputCaching(context);
+        context.AllowCacheLookup = AllowCacheLookup(context);
+        context.AllowCacheStorage = AllowCacheStorage(context);
+        context.AllowLocking = true;
+
+        // Vary by any query by default
+        context.CachedVaryByRules.QueryKeys = "*";
+
+        return Task.CompletedTask;
+    }
 
     public Task OnServeResponseAsync(IOutputCachingContext context)
     {
@@ -25,6 +37,27 @@ public class ResponseCachingPolicy : IOutputCachingResponsePolicy
         context.IsCacheEntryFresh = IsCachedEntryFresh(context);
 
         return Task.CompletedTask;
+    }
+
+    internal static bool AttemptOutputCaching(IOutputCachingContext context)
+    {
+        var request = context.HttpContext.Request;
+
+        // Verify the method
+        if (!HttpMethods.IsGet(request.Method) && !HttpMethods.IsHead(request.Method))
+        {
+            context.Logger.RequestMethodNotCacheable(request.Method);
+            return false;
+        }
+
+        // Verify existence of authorization headers
+        if (!StringValues.IsNullOrEmpty(request.Headers.Authorization))
+        {
+            context.Logger.RequestWithAuthorizationNotCacheable();
+            return false;
+        }
+
+        return true;
     }
 
     internal static bool IsResponseCacheable(IOutputCachingContext context)
@@ -205,5 +238,38 @@ public class ResponseCachingPolicy : IOutputCachingResponsePolicy
         }
 
         return true;
+    }
+
+    internal static bool AllowCacheLookup(IOutputCachingContext context)
+    {
+        var requestHeaders = context.HttpContext.Request.Headers;
+        var cacheControl = requestHeaders.CacheControl;
+
+        // Verify request cache-control parameters
+        if (!StringValues.IsNullOrEmpty(cacheControl))
+        {
+            if (HeaderUtilities.ContainsCacheDirective(cacheControl, CacheControlHeaderValue.NoCacheString))
+            {
+                context.Logger.RequestWithNoCacheNotCacheable();
+                return false;
+            }
+        }
+        else
+        {
+            // Support for legacy HTTP 1.0 cache directive
+            if (HeaderUtilities.ContainsCacheDirective(requestHeaders.Pragma, CacheControlHeaderValue.NoCacheString))
+            {
+                context.Logger.RequestWithPragmaNoCacheNotCacheable();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    internal static bool AllowCacheStorage(IOutputCachingContext context)
+    {
+        // Check request no-store
+        return !HeaderUtilities.ContainsCacheDirective(context.HttpContext.Request.Headers.CacheControl, CacheControlHeaderValue.NoStoreString);
     }
 }

@@ -31,7 +31,5 @@ public class OutputCachingFeature : IOutputCachingFeature
         }
     }
 
-    public List<IOutputCachingResponsePolicy> ResponsePolicies { get; } = new();
-
-    public List<IOutputCachingRequestPolicy> RequestPolicies { get; } = new();
+    public List<IOutputCachingPolicy> Policies { get; } = new();
 }
