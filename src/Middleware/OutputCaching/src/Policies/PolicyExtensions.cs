@@ -73,4 +73,12 @@ public static class PolicyExtensions
 
         return builder.WithOutputCachingPolicy(queryKeys.Select( q => new VaryByQueryPolicy(q)).ToArray());
     }
+
+    public static TBuilder OutputCacheProfile<TBuilder>(this TBuilder builder, string profileName) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder, nameof(builder));
+        ArgumentNullException.ThrowIfNull(profileName, nameof(profileName));
+
+        return builder.WithOutputCachingPolicy(new ProfilePolicy(profileName));
+    }
 }

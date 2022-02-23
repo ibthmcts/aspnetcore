@@ -12,6 +12,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOutputCaching(options =>
 {
     // options.RequestPolicies.Add(new VaryByQueryPolicy("culture").Map("/query"));
+
+    options.CacheProfiles["NoCache"] = new NoCachingPolicy();
 });
 
 var app = builder.Build();
@@ -44,9 +46,7 @@ app.MapGet("/nocache", async context =>
 {
     //context.Features.Get<IOutputCachingFeature>().ResponsePolicies.Add(new NoCachingPolicy());
     await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
-}).WithOutputCachingPolicy(
-        new NoCachingPolicy()
-    );
+}).OutputCacheProfile("NoCache");
 
 // Cached because Response Caching policy and contains "Cache-Control: public"
 app.MapGet("/headers", async context =>
