@@ -9,20 +9,20 @@ namespace Microsoft.AspNetCore.OutputCaching;
 
 public class OutputCachePolicyBuilder
 {
-    private readonly List<IOutputCachingPolicy> _policies = new();
-    private readonly List<Func<IOutputCachingContext, Task<bool>>> _requirements = new();
+    private List<IOutputCachingPolicy> Policies { get; } = new();
+    private List<Func<IOutputCachingContext, Task<bool>>> Requirements { get; } = new();
 
     public OutputCachePolicyBuilder(bool useDefaultPolicy = true)
     {
         if (useDefaultPolicy)
         {
-            _policies.Add(new DefaultCacheHeaderPolicy());
+            Policies.Add(new DefaultCacheHeaderPolicy());
         }
     }
 
     public OutputCachePolicyBuilder When(Func<IOutputCachingContext, Task<bool>> predicate)
     {
-        _requirements.Add(predicate);
+        Requirements.Add(predicate);
         return this;
     }
 
@@ -30,7 +30,7 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(pathBase, nameof(pathBase));
 
-        _requirements.Add(context =>
+        Requirements.Add(context =>
         {
             var match = context.HttpContext.Request.Path.StartsWithSegments(pathBase);
             return Task.FromResult(match);
@@ -43,7 +43,7 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(pathBases, nameof(pathBases));
 
-        _requirements.Add(context =>
+        Requirements.Add(context =>
         {
             var match = pathBases.Any(x => context.HttpContext.Request.Path.StartsWithSegments(x));
             return Task.FromResult(match);
@@ -56,7 +56,7 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(method, nameof(method));
 
-        _requirements.Add(context =>
+        Requirements.Add(context =>
         {
             var upperMethod = method.ToUpperInvariant();
             var match = context.HttpContext.Request.Method.ToUpperInvariant() == upperMethod;
@@ -69,7 +69,7 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(methods, nameof(methods));
 
-        _requirements.Add(context =>
+        Requirements.Add(context =>
         {
             var upperMethods = methods.Select(m => m.ToUpperInvariant()).ToArray();
             var match = methods.Any(m => context.HttpContext.Request.Method.ToUpperInvariant() == m);
@@ -82,7 +82,7 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(queryKeys, nameof(queryKeys));
 
-        _policies.Add(new VaryByQueryPolicy(queryKeys));
+        Policies.Add(new VaryByQueryPolicy(queryKeys));
         return this;
     }
 
@@ -90,7 +90,7 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(profileName, nameof(profileName));
 
-        _policies.Add(new ProfilePolicy(profileName));
+        Policies.Add(new ProfilePolicy(profileName));
 
         return this;
     }
@@ -99,32 +99,32 @@ public class OutputCachePolicyBuilder
     {
         ArgumentNullException.ThrowIfNull(tags, nameof(tags));
 
-        _policies.Add(new TagsPolicy(tags));
+        Policies.Add(new TagsPolicy(tags));
         return this;
     }
 
     public OutputCachePolicyBuilder Expires(TimeSpan expiration)
     {
-        _policies.Add(new ExpirationPolicy(expiration));
+        Policies.Add(new ExpirationPolicy(expiration));
         return this;
     }
 
     public OutputCachePolicyBuilder Lock(bool lockResponse = true)
     {
-        _policies.Add(new LockingPolicy(lockResponse));
+        Policies.Add(new LockingPolicy(lockResponse));
         return this;
     }
 
     public OutputCachePolicyBuilder Clear()
     {
-        _requirements.Clear();
-        _policies.Clear();
+        Requirements.Clear();
+        Policies.Clear();
         return this;
     }
 
     public OutputCachePolicyBuilder NotCacheable()
     {
-        _policies.Add(new NoCachingPolicy());
+        Policies.Add(new NoCachingPolicy());
         return this;
     }
 
@@ -137,13 +137,13 @@ public class OutputCachePolicyBuilder
     /// </returns>
     public IOutputCachingPolicy Build()
     {
-        var policies = new CompositePolicy(_policies.ToArray());
+        var policies = new CompositePolicy(Policies.ToArray());
 
-        if (_requirements.Any())
+        if (Requirements.Any())
         {
             return new PredicatePolicy(async c =>
             {
-                foreach (var r in _requirements)
+                foreach (var r in Requirements)
                 {
                     if (!await r(c))
                     {
