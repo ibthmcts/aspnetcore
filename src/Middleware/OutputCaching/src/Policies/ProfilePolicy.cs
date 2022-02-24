@@ -58,7 +58,7 @@ public class ProfilePolicy : IOutputCachingPolicy
     {
         var options = context.HttpContext.RequestServices.GetRequiredService<IOptions<OutputCachingOptions>>();
 
-        return options.Value.CacheProfiles.TryGetValue(_profileName, out var cacheProfile)
+        return options.Value.Profiles.TryGetValue(_profileName, out var cacheProfile)
             ? cacheProfile
             : null;
     }

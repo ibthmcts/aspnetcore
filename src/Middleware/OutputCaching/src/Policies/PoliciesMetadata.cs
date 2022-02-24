@@ -3,7 +3,7 @@
 
 namespace Microsoft.AspNetCore.OutputCaching.Policies;
 
-internal class PoliciesMetadata : IPoliciesMetadata
+internal sealed class PoliciesMetadata : IPoliciesMetadata
 {
     public List<IOutputCachingPolicy> Policies { get; } = new();
 }

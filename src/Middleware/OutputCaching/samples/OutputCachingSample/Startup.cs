@@ -18,10 +18,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOutputCaching(options =>
 {
-    // options.Policies.Add(new VaryByQueryPolicy("culture").Map("/query"));
     // options.Policies.Clear();
 
-    options.CacheProfiles["NoCache"] = new NoCachingPolicy();
+    options.Profiles["NoCache"] = new OutputCachePolicyBuilder().NotCacheable().Build();
 });
 
 var app = builder.Build();
@@ -29,7 +28,7 @@ var app = builder.Build();
 app.UseOutputCaching();
 
 // Cached because default policy
-app.MapGet("/", () => "Hello " + DateTime.UtcNow.ToString("o")).OutputCacheTags("home");
+app.MapGet("/", () => "Hello " + DateTime.UtcNow.ToString("o")).OutputCache(p => p.Tag("home"));
 
 app.MapPost("/purge/{tag}", async (IOutputCacheStore cache, string tag) =>
 {
@@ -48,7 +47,7 @@ app.MapGet("/slownolock", async (context) =>
     logger.LogWarning("Slowing ... {requests}", requests++);
     await Task.Delay(1000);
     await context.Response.WriteAsync("Slow " + DateTime.UtcNow.ToString("o"));
-}).WithOutputCachingPolicy(new ExpirationPolicy(TimeSpan.FromSeconds(1)), new LockingPolicy(false));
+}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(1)).Lock(false));
 
 // Cached because default policy
 app.MapGet("/slow", async (context) =>
@@ -57,13 +56,13 @@ app.MapGet("/slow", async (context) =>
     logger.LogWarning("Slowing ... {requests}", requests++);
     await Task.Delay(1000);
     await context.Response.WriteAsync("Slow " + DateTime.UtcNow.ToString("o"));
-}).WithOutputCachingPolicy(new ExpirationPolicy(TimeSpan.FromSeconds(1)), new LockingPolicy(true));
+}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(1)).Lock(true));
 
 // Cached because default policy
 app.MapGet("/nocache", async context =>
 {
     await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
-}).OutputCacheProfile("NoCache");
+}).OutputCache(p => p.Profile("NoCache"));
 
 // Cached because Response Caching policy and contains "Cache-Control: public"
 app.MapGet("/headers", async context =>
@@ -71,13 +70,13 @@ app.MapGet("/headers", async context =>
     // From a browser this endpoint won't be cached because of max-age: 0
     context.Response.Headers.CacheControl = CacheControlHeaderValue.PublicString;
     await context.Response.WriteAsync("Headers " + DateTime.UtcNow.ToString("o"));
-}).WithOutputCachingPolicy(new ResponseCachingPolicy());
+}).OutputCache(new ResponseCachingPolicy());
 
 app.MapGet("/query", async context =>
 {
     // Cached entries will vary by culture, but any other additional query is ignored and returned the same cached content
 
     await context.Response.WriteAsync($"Culture: {context.Request.Query["culture"]} {DateTime.UtcNow.ToString("o")}");
-}).OutputCacheVaryByQuery("culture");
+}).OutputCache(p => p.VaryByQuery("culture"));
 
 await app.RunAsync();

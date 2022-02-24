@@ -31,10 +31,10 @@ public class OutputCachingOptions
     public List<IOutputCachingPolicy> Policies { get; } = new() { new DefaultCacheHeaderPolicy() };
 
     /// <summary>
-    /// Gets a Dictionary of CacheProfile Names, <see cref="CacheProfile"/> which are pre-defined settings for
-    /// response caching.
+    /// Gets a Dictionary of policy names, <see cref="IOutputCachingPolicy"/> which are pre-defined settings for
+    /// output caching.
     /// </summary>
-    public IDictionary<string, IOutputCachingPolicy> CacheProfiles { get; } = new Dictionary<string, IOutputCachingPolicy>(StringComparer.OrdinalIgnoreCase);
+    public IDictionary<string, IOutputCachingPolicy> Profiles { get; } = new Dictionary<string, IOutputCachingPolicy>(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// For testing purposes only.

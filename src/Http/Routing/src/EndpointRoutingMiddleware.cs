@@ -9,7 +9,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microsoft.AspNetCore.Routing;
 
-internal sealed partial class EndpointRoutingMiddleware
+internal class EndpointRoutingMiddleware
 {
     private const string DiagnosticsEndpointMatchedKey = "Microsoft.AspNetCore.Routing.EndpointMatched";
 

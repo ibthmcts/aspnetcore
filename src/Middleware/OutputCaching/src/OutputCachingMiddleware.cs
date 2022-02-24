@@ -90,7 +90,7 @@ public class OutputCachingMiddleware
     {
         var context = new OutputCachingContext(httpContext, _logger);
 
-        // Add IResponseCachingFeature
+        // Add IOutputCachingFeature
         AddOutputCachingFeature(context.HttpContext);
 
         try
@@ -160,7 +160,7 @@ public class OutputCachingMiddleware
                                 StartResponse(context);
 
                                 // Finalize the cache entry
-                                FinalizeCacheBody(context);
+                                await FinalizeCacheBodyAsync(context);
 
                                 executed = true;
                             }
@@ -351,18 +351,18 @@ public class OutputCachingMiddleware
             return;
         }
 
-        context.ResponseCachingStream.DisableBuffering();
+        context.OutputCachingStream.DisableBuffering();
     }
 
     /// <summary>
     /// Stores the response body
     /// </summary>
-    internal void FinalizeCacheBody(OutputCachingContext context)
+    internal async ValueTask FinalizeCacheBodyAsync(OutputCachingContext context)
     {
-        if (context.IsResponseCacheable && context.ResponseCachingStream.BufferingEnabled)
+        if (context.IsResponseCacheable && context.OutputCachingStream.BufferingEnabled)
         {
             var contentLength = context.HttpContext.Response.ContentLength;
-            var cachedResponseBody = context.ResponseCachingStream.GetCachedResponseBody();
+            var cachedResponseBody = context.OutputCachingStream.GetCachedResponseBody();
             if (!contentLength.HasValue || contentLength == cachedResponseBody.Length
                 || (cachedResponseBody.Length == 0
                     && HttpMethods.IsHead(context.HttpContext.Request.Method)))
@@ -382,7 +382,7 @@ public class OutputCachingMiddleware
                     throw new InvalidOperationException("Cache key must be defined");
                 }
 
-                _cache.SetAsync(context.CacheKey, context.CachedResponse, context.CachedResponseValidFor);
+                await _cache.SetAsync(context.CacheKey, context.CachedResponse, context.CachedResponseValidFor);
             }
             else
             {
@@ -434,12 +434,12 @@ public class OutputCachingMiddleware
     {
         // Shim response stream
         context.OriginalResponseStream = context.HttpContext.Response.Body;
-        context.ResponseCachingStream = new OutputCachingStream(
+        context.OutputCachingStream = new OutputCachingStream(
             context.OriginalResponseStream,
             _options.MaximumBodySize,
             StreamUtilities.BodySegmentSize,
             () => StartResponse(context));
-        context.HttpContext.Response.Body = context.ResponseCachingStream;
+        context.HttpContext.Response.Body = context.OutputCachingStream;
     }
 
     internal static void RemoveOutputCachingFeature(HttpContext context) =>
@@ -450,7 +450,7 @@ public class OutputCachingMiddleware
         // Unshim response stream
         context.HttpContext.Response.Body = context.OriginalResponseStream;
 
-        // Remove IResponseCachingFeature
+        // Remove IOutputCachingFeature
         RemoveOutputCachingFeature(context.HttpContext);
     }
 

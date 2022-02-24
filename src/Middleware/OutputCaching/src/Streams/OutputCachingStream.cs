@@ -3,7 +3,7 @@
 
 namespace Microsoft.AspNetCore.OutputCaching;
 
-internal class OutputCachingStream : Stream
+internal sealed class OutputCachingStream : Stream
 {
     private readonly Stream _innerStream;
     private readonly long _maxBufferSize;

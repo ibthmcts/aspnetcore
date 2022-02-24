@@ -7,8 +7,7 @@ namespace Microsoft.AspNetCore.OutputCaching;
 
 internal class WorkDispatcher<TKey, TValue> where TKey : notnull
 {
-
-    private readonly ConcurrentDictionary<TKey, Task<TValue?>> _workers = new ConcurrentDictionary<TKey, Task<TValue?>>();
+    private readonly ConcurrentDictionary<TKey, Task<TValue?>> _workers = new();
 
     public async Task<TValue?> ScheduleAsync(TKey key, Func<TKey, Task<TValue?>> valueFactory)
     {

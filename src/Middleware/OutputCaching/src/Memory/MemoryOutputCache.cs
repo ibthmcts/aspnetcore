@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace Microsoft.AspNetCore.OutputCaching.Memory;
 
-internal class MemoryOutputCacheStore : IOutputCacheStore
+internal sealed class MemoryOutputCacheStore : IOutputCacheStore
 {
     private readonly IMemoryCache _cache;
     private readonly ConcurrentDictionary<string, HashSet<string>> _taggedEntries = new();
