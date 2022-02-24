@@ -2,8 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.Extensions.Options;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +28,14 @@ public static class OutputCachingServicesExtensions
 
         services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
 
+        services.TryAddSingleton<IOutputCache>(sp =>
+        {
+            var outputCacheOptions = sp.GetRequiredService<IOptions<OutputCachingOptions>>();
+            return new MemoryOutputCache(new MemoryCache(new MemoryCacheOptions
+            {
+                SizeLimit = outputCacheOptions.Value.SizeLimit
+            }));
+        });
         return services;
     }
 

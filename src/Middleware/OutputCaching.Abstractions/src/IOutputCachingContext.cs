@@ -21,6 +21,7 @@ public interface IOutputCachingContext
     public TimeSpan? ResponseExpirationTimeSpan { get; set; }
     IHeaderDictionary CachedResponseHeaders { get; }
     CachedVaryByRules CachedVaryByRules { get; }
+    HashSet<string> Tags { get; }
     ILogger Logger { get; }
 
     /// <summary>

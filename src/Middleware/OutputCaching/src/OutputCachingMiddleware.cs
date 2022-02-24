@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -42,6 +43,7 @@ public class OutputCachingMiddleware
         RequestDelegate next,
         IOptions<OutputCachingOptions> options,
         ILoggerFactory loggerFactory,
+        IOutputCache outputCache,
         ObjectPoolProvider poolProvider
         )
         : this(
@@ -49,10 +51,7 @@ public class OutputCachingMiddleware
             options,
             loggerFactory,
             new OutputCachingPolicyProvider(options),
-            new MemoryOutputCache(new MemoryCache(new MemoryCacheOptions
-            {
-                SizeLimit = options.Value.SizeLimit
-            })),
+            outputCache,
             new OutputCachingKeyProvider(poolProvider, options))
     { }
 
@@ -110,7 +109,7 @@ public class OutputCachingMiddleware
                     // TODO: should it be part of the cache implementations or can we assume all caches would benefit from it?
                     // It makes sense for caches that use IO (disk, network) or need to deserialize the state but could also be a global option
 
-                    var cacheEntry = await _outputCacheEntryDispatcher.ScheduleAsync(context.CacheKey, _cache, static (key, cache) => Task.FromResult(cache.Get(key)));
+                    var cacheEntry = await _outputCacheEntryDispatcher.ScheduleAsync(context.CacheKey, _cache, static async (key, cache) => await cache.GetAsync(key));
 
                     if (await TryServeFromCacheAsync(context, cacheEntry))
                     {
@@ -337,7 +336,8 @@ public class OutputCachingMiddleware
             {
                 Created = context.ResponseDate.Value,
                 StatusCode = response.StatusCode,
-                Headers = new HeaderDictionary()
+                Headers = new HeaderDictionary(),
+                Tags = context.Tags.ToArray()
             };
 
             foreach (var header in headers)
@@ -382,7 +382,7 @@ public class OutputCachingMiddleware
                     throw new InvalidOperationException("Cache key must be defined");
                 }
 
-                _cache.Set(context.CacheKey, context.CachedResponse, context.CachedResponseValidFor);
+                _cache.SetAsync(context.CacheKey, context.CachedResponse, context.CachedResponseValidFor);
             }
             else
             {

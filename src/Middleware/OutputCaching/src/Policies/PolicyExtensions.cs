@@ -81,4 +81,13 @@ public static class PolicyExtensions
 
         return builder.WithOutputCachingPolicy(new ProfilePolicy(profileName));
     }
+
+
+    public static TBuilder OutputCacheTags<TBuilder>(this TBuilder builder, params string[] tags) where TBuilder : IEndpointConventionBuilder
+    {
+        ArgumentNullException.ThrowIfNull(builder, nameof(builder));
+        ArgumentNullException.ThrowIfNull(tags, nameof(tags));
+
+        return builder.WithOutputCachingPolicy(new TagsPolicy(tags));
+    }
 }

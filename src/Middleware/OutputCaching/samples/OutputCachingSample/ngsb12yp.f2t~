@@ -70,8 +70,6 @@ app.MapGet("/headers", async context =>
 
 app.MapGet("/query", async context =>
 {
-    // Cached entries will vary by culture, but any other additional query is ignored and returned the same cached content
-
     await context.Response.WriteAsync($"Culture: {context.Request.Query["culture"]} {DateTime.UtcNow.ToString("o")}");
 }).OutputCacheVaryByQuery("culture");
 

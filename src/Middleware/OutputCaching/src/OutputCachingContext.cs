@@ -63,6 +63,7 @@ public class OutputCachingContext : IOutputCachingContext
     public TimeSpan? CachedEntryAge { get; internal set; }
 
     public CachedVaryByRules CachedVaryByRules { get; set; } = new();
+    public HashSet<string> Tags { get; } = new();
 
     public ILogger Logger { get; }
 

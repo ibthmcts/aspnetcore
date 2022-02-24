@@ -14,4 +14,5 @@ internal class MemoryCachedResponse
     public IHeaderDictionary Headers { get; set; } = new HeaderDictionary();
 
     public CachedResponseBody Body { get; set; } = default!;
+    public string[] Tags { get; set; } = default!;
 }
