@@ -27,7 +27,7 @@ public class OutputCachingMiddleware
     private readonly OutputCachingOptions _options;
     private readonly ILogger _logger;
     private readonly IOutputCachingPolicyProvider _policyProvider;
-    private readonly IOutputCache _cache;
+    private readonly IOutputCacheStore _cache;
     private readonly IOutputCachingKeyProvider _keyProvider;
     private readonly WorkDispatcher<string, OutputCacheEntry?> _outputCacheEntryDispatcher;
     private readonly WorkDispatcher<string, OutputCacheEntry?> _requestDispatcher;
@@ -43,7 +43,7 @@ public class OutputCachingMiddleware
         RequestDelegate next,
         IOptions<OutputCachingOptions> options,
         ILoggerFactory loggerFactory,
-        IOutputCache outputCache,
+        IOutputCacheStore outputCache,
         ObjectPoolProvider poolProvider
         )
         : this(
@@ -61,7 +61,7 @@ public class OutputCachingMiddleware
         IOptions<OutputCachingOptions> options,
         ILoggerFactory loggerFactory,
         IOutputCachingPolicyProvider policyProvider,
-        IOutputCache cache,
+        IOutputCacheStore cache,
         IOutputCachingKeyProvider keyProvider)
     {
         ArgumentNullException.ThrowIfNull(next, nameof(next));

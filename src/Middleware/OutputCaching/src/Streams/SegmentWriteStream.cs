@@ -122,10 +122,8 @@ internal class SegmentWriteStream : Stream
 
     public override void Write(byte[] buffer, int offset, int count)
     {
-        if (buffer == null)
-        {
-            throw new ArgumentNullException(nameof(buffer));
-        }
+        ArgumentNullException.ThrowIfNull(buffer, nameof(buffer));
+
         if (offset < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(offset), offset, "Non-negative number required.");

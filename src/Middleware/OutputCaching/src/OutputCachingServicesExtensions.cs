@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.AspNetCore.OutputCaching;
+using Microsoft.AspNetCore.OutputCaching.Memory;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.ObjectPool;
@@ -21,17 +22,14 @@ public static class OutputCachingServicesExtensions
     /// <returns></returns>
     public static IServiceCollection AddOutputCaching(this IServiceCollection services)
     {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
+        ArgumentNullException.ThrowIfNull(nameof(services));
 
         services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
 
-        services.TryAddSingleton<IOutputCache>(sp =>
+        services.TryAddSingleton<IOutputCacheStore>(sp =>
         {
             var outputCacheOptions = sp.GetRequiredService<IOptions<OutputCachingOptions>>();
-            return new MemoryOutputCache(new MemoryCache(new MemoryCacheOptions
+            return new MemoryOutputCacheStore(new MemoryCache(new MemoryCacheOptions
             {
                 SizeLimit = outputCacheOptions.Value.SizeLimit
             }));
@@ -47,14 +45,8 @@ public static class OutputCachingServicesExtensions
     /// <returns></returns>
     public static IServiceCollection AddOutputCaching(this IServiceCollection services, Action<OutputCachingOptions> configureOptions)
     {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
-        if (configureOptions == null)
-        {
-            throw new ArgumentNullException(nameof(configureOptions));
-        }
+        ArgumentNullException.ThrowIfNull(services, nameof(services));
+        ArgumentNullException.ThrowIfNull(configureOptions, nameof(configureOptions));
 
         services.Configure(configureOptions);
         services.AddOutputCaching();

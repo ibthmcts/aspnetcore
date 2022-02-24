@@ -3,7 +3,7 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Microsoft.AspNetCore.OutputCaching;
+namespace Microsoft.AspNetCore.OutputCaching.Memory;
 
 internal class MemoryCachedResponse
 {

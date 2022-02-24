@@ -21,14 +21,8 @@ internal sealed class OutputCachingKeyProvider : IOutputCachingKeyProvider
 
     internal OutputCachingKeyProvider(ObjectPoolProvider poolProvider, IOptions<OutputCachingOptions> options)
     {
-        if (poolProvider == null)
-        {
-            throw new ArgumentNullException(nameof(poolProvider));
-        }
-        if (options == null)
-        {
-            throw new ArgumentNullException(nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(poolProvider, nameof(poolProvider));
+        ArgumentNullException.ThrowIfNull(options, nameof(options));
 
         _builderPool = poolProvider.CreateStringBuilderPool();
         _options = options.Value;
@@ -37,10 +31,7 @@ internal sealed class OutputCachingKeyProvider : IOutputCachingKeyProvider
     // GET<delimiter>SCHEME<delimiter>HOST:PORT/PATHBASE/PATH<delimiter>H<delimiter>HeaderName=HeaderValue<delimiter>Q<delimiter>QueryName=QueryValue1<subdelimiter>QueryValue2
     public string CreateStorageVaryByKey(OutputCachingContext context)
     {
-        if (context == null)
-        {
-            throw new ArgumentNullException(nameof(context));
-        }
+        ArgumentNullException.ThrowIfNull(_builderPool, nameof(context));
 
         var varyByRules = context.CachedVaryByRules;
         if (varyByRules == null)

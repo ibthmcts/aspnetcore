@@ -19,10 +19,7 @@ public class CachedResponseBody
 
     public async Task CopyToAsync(PipeWriter destination, CancellationToken cancellationToken)
     {
-        if (destination == null)
-        {
-            throw new ArgumentNullException(nameof(destination));
-        }
+        ArgumentNullException.ThrowIfNull(destination, nameof(destination));
 
         foreach (var segment in Segments)
         {

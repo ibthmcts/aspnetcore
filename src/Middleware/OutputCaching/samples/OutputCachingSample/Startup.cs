@@ -1,6 +1,13 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+
+// TODO:
+// buidler pattern for endpoint options
+// attribute
+// https://github.com/dotnet/aspnetcore/issues/39840
+
+
 using Microsoft.Net.Http.Headers;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.OutputCaching.Policies;
@@ -24,7 +31,7 @@ app.UseOutputCaching();
 // Cached because default policy
 app.MapGet("/", () => "Hello " + DateTime.UtcNow.ToString("o")).OutputCacheTags("home");
 
-app.MapPost("/purge/{tag}", async (IOutputCache cache, string tag) =>
+app.MapPost("/purge/{tag}", async (IOutputCacheStore cache, string tag) =>
 {
     // POST such that the endpoint is not cached itself
 

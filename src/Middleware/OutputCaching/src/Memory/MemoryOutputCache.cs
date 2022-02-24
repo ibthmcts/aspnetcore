@@ -5,14 +5,14 @@ using System.Collections.Concurrent;
 using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace Microsoft.AspNetCore.OutputCaching;
+namespace Microsoft.AspNetCore.OutputCaching.Memory;
 
-internal class MemoryOutputCache : IOutputCache
+internal class MemoryOutputCacheStore : IOutputCacheStore
 {
     private readonly IMemoryCache _cache;
     private readonly ConcurrentDictionary<string, HashSet<string>> _taggedEntries = new();
 
-    internal MemoryOutputCache(IMemoryCache cache)
+    internal MemoryOutputCacheStore(IMemoryCache cache)
     {
         ArgumentNullException.ThrowIfNull(cache, nameof(cache));
 

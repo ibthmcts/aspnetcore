@@ -42,7 +42,7 @@ internal static class TaskToApm
             return;
         }
 
-        throw new ArgumentNullException(nameof(asyncResult));
+        ArgumentNullException.ThrowIfNull(asyncResult, nameof(asyncResult));
     }
 
     /// <summary>Processes an IAsyncResult returned by Begin.</summary>
@@ -54,7 +54,7 @@ internal static class TaskToApm
             return task.GetAwaiter().GetResult();
         }
 
-        throw new ArgumentNullException(nameof(asyncResult));
+        ArgumentNullException.ThrowIfNull(asyncResult, nameof(asyncResult));
     }
 
     /// <summary>Provides a simple IAsyncResult that wraps a Task.</summary>

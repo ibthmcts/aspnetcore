@@ -3,7 +3,7 @@
 
 namespace Microsoft.AspNetCore.OutputCaching;
 
-public interface IOutputCache
+public interface IOutputCacheStore
 {
     /// <summary>
     /// Evicts cache entries by tag.
