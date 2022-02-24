@@ -19,7 +19,7 @@ internal class MemoryOutputCache : IOutputCache
         _cache = cache;
     }
 
-    public Task EvictByTagAsync(string tag)
+    public ValueTask EvictByTagAsync(string tag)
     {
         if (_taggedEntries.TryGetValue(tag, out var keys))
         {
@@ -29,10 +29,10 @@ internal class MemoryOutputCache : IOutputCache
             }
         }
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task<OutputCacheEntry?> GetAsync(string key)
+    public ValueTask<OutputCacheEntry?> GetAsync(string key)
     {
         var entry = _cache.Get(key);
 
@@ -48,13 +48,13 @@ internal class MemoryOutputCache : IOutputCache
 
             outputCacheEntry.Tags = memoryCachedResponse.Tags.ToArray();
 
-            return Task.FromResult(outputCacheEntry);
+            return ValueTask.FromResult(outputCacheEntry);
         }
 
-        return Task.FromResult(default(OutputCacheEntry));
+        return ValueTask.FromResult(default(OutputCacheEntry));
     }
 
-    public Task SetAsync(string key, OutputCacheEntry cachedResponse, TimeSpan validFor)
+    public ValueTask SetAsync(string key, OutputCacheEntry cachedResponse, TimeSpan validFor)
     {
         foreach (var tag in cachedResponse.Tags)
         {
@@ -72,7 +72,7 @@ internal class MemoryOutputCache : IOutputCache
             key,
             new MemoryCachedResponse
             {
-                Created = cachedResponse.Created,   
+                Created = cachedResponse.Created,
                 StatusCode = cachedResponse.StatusCode,
                 Headers = cachedResponse.Headers,
                 Body = cachedResponse.Body,
@@ -81,9 +81,9 @@ internal class MemoryOutputCache : IOutputCache
             new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = validFor,
-                Size = CacheEntryHelpers.EstimateCachedResponseSize(cachedResponse)               
+                Size = CacheEntryHelpers.EstimateCachedResponseSize(cachedResponse)
             });
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 }

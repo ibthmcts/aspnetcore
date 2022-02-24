@@ -11,7 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOutputCaching(options =>
 {
-    // options.RequestPolicies.Add(new VaryByQueryPolicy("culture").Map("/query"));
+    // options.Policies.Add(new VaryByQueryPolicy("culture").Map("/query"));
+    // options.Policies.Clear();
 
     options.CacheProfiles["NoCache"] = new NoCachingPolicy();
 });
@@ -23,12 +24,9 @@ app.UseOutputCaching();
 // Cached because default policy
 app.MapGet("/", () => "Hello " + DateTime.UtcNow.ToString("o")).OutputCacheTags("home");
 
-app.MapPost("/purge/{tag}", async (context) =>
+app.MapPost("/purge/{tag}", async (IOutputCache cache, string tag) =>
 {
     // POST such that the endpoint is not cached itself
-
-    var cache = context.RequestServices.GetRequiredService<IOutputCache>();
-    var tag = context.GetRouteValue("tag")?.ToString();
 
     if (!String.IsNullOrEmpty(tag))
     {
