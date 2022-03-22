@@ -8,5 +8,7 @@ namespace Microsoft.AspNetCore.OutputCaching;
 /// </summary>
 public interface IOutputCachingFeature
 {
+    IOutputCachingContext Context { get; }
+
     List<IOutputCachingPolicy> Policies { get; }
 }

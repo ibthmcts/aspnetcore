@@ -7,7 +7,7 @@ namespace Microsoft.AspNetCore.OutputCaching;
 
 public class CachedVaryByRules
 {
-    public Dictionary<string, string> VaryByCustom { get; } = new (StringComparer.OrdinalIgnoreCase);
+    public Dictionary<string, string> VaryByCustom { get; } = new(StringComparer.OrdinalIgnoreCase);
 
     public StringValues Headers { get; set; }
 

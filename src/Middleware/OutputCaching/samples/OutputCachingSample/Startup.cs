@@ -34,10 +34,11 @@ app.MapPost("/purge/{tag}", async (IOutputCacheStore cache, string tag) =>
 {
     // POST such that the endpoint is not cached itself
 
-    if (!String.IsNullOrEmpty(tag))
+    if (string.IsNullOrEmpty(tag))
     {
-        await cache.EvictByTagAsync(tag);
+        return;
     }
+    await cache.EvictByTagAsync(tag);
 });
 
 // Cached because default policy
@@ -45,24 +46,30 @@ app.MapGet("/slownolock", async (context) =>
 {
     var logger = context.RequestServices.GetService<ILogger<OutputCachingMiddleware>>();
     logger.LogWarning("Slowing ... {requests}", requests++);
-    await Task.Delay(1000);
+    await Task.Delay(3000);
     await context.Response.WriteAsync("Slow " + DateTime.UtcNow.ToString("o"));
-}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(1)).Lock(false));
+}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(5)).Lock(false));
 
 // Cached because default policy
 app.MapGet("/slow", async (context) =>
 {
     var logger = context.RequestServices.GetService<ILogger<OutputCachingMiddleware>>();
     logger.LogWarning("Slowing ... {requests}", requests++);
-    await Task.Delay(1000);
+    await Task.Delay(3000);
     await context.Response.WriteAsync("Slow " + DateTime.UtcNow.ToString("o"));
-}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(1)).Lock(true));
+}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(5)).Lock(true));
 
-// Cached because default policy
+// Cached because default policy, but not cached using custom profile
 app.MapGet("/nocache", async context =>
 {
     await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
 }).OutputCache(p => p.Profile("NoCache"));
+
+// Cached because default policy, but not cached using custom profile with attribute
+app.MapGet("/attribute", [OutputCacheProfile("NoCache")] async (context) =>
+{
+    await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
+});
 
 // Cached because Response Caching policy and contains "Cache-Control: public"
 app.MapGet("/headers", async context =>

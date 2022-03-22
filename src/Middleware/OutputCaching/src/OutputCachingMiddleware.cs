@@ -91,7 +91,7 @@ public class OutputCachingMiddleware
         var context = new OutputCachingContext(httpContext, _logger);
 
         // Add IOutputCachingFeature
-        AddOutputCachingFeature(context.HttpContext);
+        AddOutputCachingFeature(context);
 
         try
         {
@@ -377,7 +377,7 @@ public class OutputCachingMiddleware
                 context.CachedResponse.Body = cachedResponseBody;
                 _logger.ResponseCached();
 
-                if (String.IsNullOrEmpty(context.CacheKey))
+                if (string.IsNullOrEmpty(context.CacheKey))
                 {
                     throw new InvalidOperationException("Cache key must be defined");
                 }
@@ -420,14 +420,14 @@ public class OutputCachingMiddleware
         }
     }
 
-    internal static void AddOutputCachingFeature(HttpContext context)
+    internal static void AddOutputCachingFeature(OutputCachingContext context)
     {
-        if (context.Features.Get<IOutputCachingFeature>() != null)
+        if (context.HttpContext.Features.Get<IOutputCachingFeature>() != null)
         {
             throw new InvalidOperationException($"Another instance of {nameof(OutputCachingFeature)} already exists. Only one instance of {nameof(OutputCachingMiddleware)} can be configured for an application.");
         }
 
-        context.Features.Set<IOutputCachingFeature>(new OutputCachingFeature());
+        context.HttpContext.Features.Set<IOutputCachingFeature>(new OutputCachingFeature(context));
     }
 
     internal void ShimResponseStream(OutputCachingContext context)
