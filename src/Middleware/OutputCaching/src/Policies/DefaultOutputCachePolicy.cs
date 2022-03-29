@@ -9,7 +9,7 @@ namespace Microsoft.AspNetCore.OutputCaching;
 /// <summary>
 /// Default policy.
 /// </summary>
-public class DefaultCacheHeaderPolicy : IOutputCachingPolicy
+public class DefaultOutputCachePolicy : IOutputCachingPolicy
 {
     public Task OnRequestAsync(IOutputCachingContext context)
     {

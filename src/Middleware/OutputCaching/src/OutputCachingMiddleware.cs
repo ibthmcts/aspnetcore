@@ -3,7 +3,6 @@
 
 using System.Linq;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
@@ -17,8 +16,6 @@ namespace Microsoft.AspNetCore.OutputCaching;
 /// </summary>
 public class OutputCachingMiddleware
 {
-    private static readonly TimeSpan DefaultExpirationTimeSpan = TimeSpan.FromSeconds(60);
-
     // see https://tools.ietf.org/html/rfc7232#section-4.1
     private static readonly string[] HeadersToIncludeIn304 =
         new[] { "Cache-Control", "Content-Location", "Date", "ETag", "Expires", "Vary" };
@@ -320,8 +317,7 @@ public class OutputCachingMiddleware
             context.CachedResponseValidFor = context.ResponseSharedMaxAge ??
                 context.ResponseMaxAge ??
                 (context.ResponseExpires - context.ResponseTime!.Value) ??
-                context.ResponseExpirationTimeSpan ??
-                DefaultExpirationTimeSpan;
+                context.ResponseExpirationTimeSpan ?? _options.DefaultExpirationTimeSpan;
 
             // Ensure date header is set
             if (!context.ResponseDate.HasValue)

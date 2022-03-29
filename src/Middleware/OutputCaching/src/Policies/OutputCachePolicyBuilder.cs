@@ -16,7 +16,7 @@ public class OutputCachePolicyBuilder
     {
         if (useDefaultPolicy)
         {
-            Policies.Add(new DefaultCacheHeaderPolicy());
+            Policies.Add(new DefaultOutputCachePolicy());
         }
     }
 
@@ -83,6 +83,38 @@ public class OutputCachePolicyBuilder
         ArgumentNullException.ThrowIfNull(queryKeys, nameof(queryKeys));
 
         Policies.Add(new VaryByQueryPolicy(queryKeys));
+        return this;
+    }
+
+    public OutputCachePolicyBuilder VaryByValue(Func<Task<string>> varyBy)
+    {
+        ArgumentNullException.ThrowIfNull(varyBy, nameof(varyBy));
+
+        Policies.Add(new VaryByValuePolicy(varyBy));
+        return this;
+    }
+
+    public OutputCachePolicyBuilder VaryByValue(Func<Task<(string, string)>> varyBy)
+    {
+        ArgumentNullException.ThrowIfNull(varyBy, nameof(varyBy));
+
+        Policies.Add(new VaryByValuePolicy(varyBy));
+        return this;
+    }
+
+    public OutputCachePolicyBuilder VaryByValue(Func<string> varyBy)
+    {
+        ArgumentNullException.ThrowIfNull(varyBy, nameof(varyBy));
+
+        Policies.Add(new VaryByValuePolicy(varyBy));
+        return this;
+    }
+
+    public OutputCachePolicyBuilder VaryByValue(Func<(string, string)> varyBy)
+    {
+        ArgumentNullException.ThrowIfNull(varyBy, nameof(varyBy));
+
+        Policies.Add(new VaryByValuePolicy(varyBy));
         return this;
     }
 

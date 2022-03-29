@@ -24,11 +24,16 @@ public class OutputCachingOptions
     public long MaximumBodySize { get; set; } = 64 * 1024 * 1024;
 
     /// <summary>
+    /// The duration a response is cached when no specific value is defined by a policy. The default is set to 60 seconds.
+    /// </summary>
+    public TimeSpan DefaultExpirationTimeSpan { get; set; } = TimeSpan.FromSeconds(60);
+
+    /// <summary>
     /// <c>true</c> if request paths are case-sensitive; otherwise <c>false</c>. The default is to treat paths as case-insensitive.
     /// </summary>
     public bool UseCaseSensitivePaths { get; set; }
 
-    public List<IOutputCachingPolicy> Policies { get; } = new() { new DefaultCacheHeaderPolicy() };
+    public List<IOutputCachingPolicy> Policies { get; } = new() { new DefaultOutputCachePolicy() };
 
     /// <summary>
     /// Gets a Dictionary of policy names, <see cref="IOutputCachingPolicy"/> which are pre-defined settings for

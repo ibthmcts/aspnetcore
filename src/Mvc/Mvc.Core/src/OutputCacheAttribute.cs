@@ -52,13 +52,10 @@ public class OutputCacheAttribute : Attribute, IOrderedFilter, IPoliciesMetadata
     /// <summary>
     /// Gets or sets the value of the cache profile name.
     /// </summary>
-    public string? CacheProfileName { get; set; }
+    public string? Profile { get; set; }
 
     /// <inheritdoc />
     public int Order { get; set; }
-
-    /// <inheritdoc />
-    public bool IsReusable => true;
 
     public List<IOutputCachingPolicy> Policies => _policies ??= GetPolicies();
 
@@ -71,9 +68,9 @@ public class OutputCacheAttribute : Attribute, IOrderedFilter, IPoliciesMetadata
             policies.Add(new NoCachingPolicy());
         }
 
-        if (CacheProfileName != null)
+        if (Profile != null)
         {
-            policies.Add(new ProfilePolicy(CacheProfileName));
+            policies.Add(new ProfilePolicy(Profile));
         }
 
         if (VaryByQueryKeys != null)
@@ -87,18 +84,5 @@ public class OutputCacheAttribute : Attribute, IOrderedFilter, IPoliciesMetadata
         }
 
         return policies;
-    }
-
-    /// <inheritdoc />
-    public IFilterMetadata CreateInstance(IServiceProvider serviceProvider)
-    {
-        if (serviceProvider == null)
-        {
-            throw new ArgumentNullException(nameof(serviceProvider));
-        }
-
-        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-
-        return new OutputCacheFilter(loggerFactory);
     }
 }

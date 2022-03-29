@@ -1,18 +1,9 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-
-// TODO:
-// buidler pattern for endpoint options
-// attribute
-// https://github.com/dotnet/aspnetcore/issues/39840
-
-
-using Microsoft.Net.Http.Headers;
 using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.OutputCaching.Policies;
-
-long requests = 0;
+using Microsoft.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,49 +18,34 @@ var app = builder.Build();
 
 app.UseOutputCaching();
 
-// Cached because default policy
-app.MapGet("/", () => "Hello " + DateTime.UtcNow.ToString("o")).OutputCache(p => p.Tag("home"));
+app.MapGet("/", Gravatar.WriteGravatar).OutputCache(x => x.Tag("home"));
+
+app.MapGet("/nocache", Gravatar.WriteGravatar).OutputCache(x => x.NotCacheable());
+
+app.MapGet("/profile", Gravatar.WriteGravatar).OutputCache(x => x.Profile("NoCache"));
+
+app.MapGet("/attribute", [OutputCache(Profile = "NoCache")] (c) => Gravatar.WriteGravatar(c));
 
 app.MapPost("/purge/{tag}", async (IOutputCacheStore cache, string tag) =>
 {
     // POST such that the endpoint is not cached itself
 
-    if (string.IsNullOrEmpty(tag))
-    {
-        return;
-    }
     await cache.EvictByTagAsync(tag);
 });
 
-// Cached because default policy
-app.MapGet("/slownolock", async (context) =>
-{
-    var logger = context.RequestServices.GetService<ILogger<OutputCachingMiddleware>>();
-    logger.LogWarning("Slowing ... {requests}", requests++);
-    await Task.Delay(3000);
-    await context.Response.WriteAsync("Slow " + DateTime.UtcNow.ToString("o"));
-}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(5)).Lock(false));
+// Cached entries will vary by culture, but any other additional query is ignored and returns the same cached content
+app.MapGet("/query", Gravatar.WriteGravatar).OutputCache(p => p.VaryByQuery("culture"));
 
-// Cached because default policy
-app.MapGet("/slow", async (context) =>
-{
-    var logger = context.RequestServices.GetService<ILogger<OutputCachingMiddleware>>();
-    logger.LogWarning("Slowing ... {requests}", requests++);
-    await Task.Delay(3000);
-    await context.Response.WriteAsync("Slow " + DateTime.UtcNow.ToString("o"));
-}).OutputCache(p => p.Expires(TimeSpan.FromSeconds(5)).Lock(true));
+app.MapGet("/vary", Gravatar.WriteGravatar).OutputCache(c => c.VaryByValue(() => ("time", (DateTime.Now.Second % 2).ToString())));
 
-// Cached because default policy, but not cached using custom profile
-app.MapGet("/nocache", async context =>
-{
-    await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
-}).OutputCache(p => p.Profile("NoCache"));
+long requests = 0;
 
-// Cached because default policy, but not cached using custom profile with attribute
-app.MapGet("/attribute", [OutputCacheProfile("NoCache")] async (context) =>
+// Locking is enabled by default
+app.MapGet("/lock", async (context) =>
 {
-    await context.Response.WriteAsync("Not cached " + DateTime.UtcNow.ToString("o"));
-});
+    await Task.Delay(1000);
+    await context.Response.WriteAsync($"<pre>{requests++}</pre>");
+}).OutputCache(p => p.Lock(false).Expires(TimeSpan.FromMilliseconds(1)));
 
 // Cached because Response Caching policy and contains "Cache-Control: public"
 app.MapGet("/headers", async context =>
@@ -78,12 +54,5 @@ app.MapGet("/headers", async context =>
     context.Response.Headers.CacheControl = CacheControlHeaderValue.PublicString;
     await context.Response.WriteAsync("Headers " + DateTime.UtcNow.ToString("o"));
 }).OutputCache(new ResponseCachingPolicy());
-
-app.MapGet("/query", async context =>
-{
-    // Cached entries will vary by culture, but any other additional query is ignored and returned the same cached content
-
-    await context.Response.WriteAsync($"Culture: {context.Request.Query["culture"]} {DateTime.UtcNow.ToString("o")}");
-}).OutputCache(p => p.VaryByQuery("culture"));
 
 await app.RunAsync();
