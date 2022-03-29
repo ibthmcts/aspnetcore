@@ -12,7 +12,7 @@ namespace Microsoft.AspNetCore.Components.Authorization;
 
 public class AuthorizeRouteViewTest
 {
-    private static readonly IReadOnlyDictionary<string, object> EmptyParametersDictionary = new Dictionary<string, object>();
+    private static readonly IReadOnlyDictionary<string, object> _emptyParametersDictionary = new Dictionary<string, object>();
     private readonly TestAuthenticationStateProvider _authenticationStateProvider;
     private readonly TestRenderer _renderer;
     private readonly RouteView _authorizeRouteViewComponent;
@@ -120,7 +120,7 @@ public class AuthorizeRouteViewTest
     public void NotAuthorizedWhenResourceMissing()
     {
         // Arrange
-        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), _emptyParametersDictionary);
         _testAuthorizationService.NextResult = AuthorizationResult.Failed();
 
         // Act
@@ -149,7 +149,7 @@ public class AuthorizeRouteViewTest
     public void WhenNotAuthorized_RendersDefaultNotAuthorizedContentInsideLayout()
     {
         // Arrange
-        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), _emptyParametersDictionary);
         _testAuthorizationService.NextResult = AuthorizationResult.Failed();
 
         // Act
@@ -172,7 +172,7 @@ public class AuthorizeRouteViewTest
     public void WhenNotAuthorized_RendersCustomNotAuthorizedContentInsideLayout()
     {
         // Arrange
-        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), _emptyParametersDictionary);
         _testAuthorizationService.NextResult = AuthorizationResult.Failed();
         _authenticationStateProvider.CurrentAuthStateTask = Task.FromResult(new AuthenticationState(
             new ClaimsPrincipal(new TestIdentity { Name = "Bert" })));
@@ -200,7 +200,7 @@ public class AuthorizeRouteViewTest
     public async Task WhenAuthorizing_RendersDefaultAuthorizingContentInsideLayout()
     {
         // Arrange
-        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), _emptyParametersDictionary);
         var authStateTcs = new TaskCompletionSource<AuthenticationState>();
         _authenticationStateProvider.CurrentAuthStateTask = authStateTcs.Task;
         RenderFragment<AuthenticationState> customNotAuthorized =
@@ -244,7 +244,7 @@ public class AuthorizeRouteViewTest
     public void WhenAuthorizing_RendersCustomAuthorizingContentInsideLayout()
     {
         // Arrange
-        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageRequiringAuthorization), _emptyParametersDictionary);
         var authStateTcs = new TaskCompletionSource<AuthenticationState>();
         _authenticationStateProvider.CurrentAuthStateTask = authStateTcs.Task;
         RenderFragment customAuthorizing =
@@ -272,7 +272,7 @@ public class AuthorizeRouteViewTest
     public void WithoutCascadedAuthenticationState_WrapsOutputInCascadingAuthenticationState()
     {
         // Arrange/Act
-        var routeData = new RouteData(typeof(TestPageWithNoAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageWithNoAuthorization), _emptyParametersDictionary);
         _renderer.RenderRootComponent(_authorizeRouteViewComponentId, ParameterView.FromDictionary(new Dictionary<string, object>
             {
                 { nameof(AuthorizeRouteView.RouteData), routeData }
@@ -298,7 +298,7 @@ public class AuthorizeRouteViewTest
     public void WithCascadedAuthenticationState_DoesNotWrapOutputInCascadingAuthenticationState()
     {
         // Arrange
-        var routeData = new RouteData(typeof(TestPageWithNoAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageWithNoAuthorization), _emptyParametersDictionary);
         var rootComponent = new AuthorizeRouteViewWithExistingCascadedAuthenticationState(
             _authenticationStateProvider.CurrentAuthStateTask,
             routeData);
@@ -330,7 +330,7 @@ public class AuthorizeRouteViewTest
     {
         // Arrange/Act 1: Start on some route
         // Not asserting about the initial output, as that is covered by other tests
-        var routeData = new RouteData(typeof(TestPageWithNoAuthorization), EmptyParametersDictionary);
+        var routeData = new RouteData(typeof(TestPageWithNoAuthorization), _emptyParametersDictionary);
         _renderer.RenderRootComponent(_authorizeRouteViewComponentId, ParameterView.FromDictionary(new Dictionary<string, object>
             {
                 { nameof(AuthorizeRouteView.RouteData), routeData },
@@ -338,7 +338,7 @@ public class AuthorizeRouteViewTest
             }));
 
         // Act 2: Move to another route
-        var routeData2 = new RouteData(typeof(TestPageRequiringAuthorization), EmptyParametersDictionary);
+        var routeData2 = new RouteData(typeof(TestPageRequiringAuthorization), _emptyParametersDictionary);
         var render2Task = _renderer.Dispatcher.InvokeAsync(() => _authorizeRouteViewComponent.SetParametersAsync(ParameterView.FromDictionary(new Dictionary<string, object>
             {
                 { nameof(AuthorizeRouteView.RouteData), routeData2 },

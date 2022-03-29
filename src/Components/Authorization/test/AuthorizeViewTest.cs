@@ -17,7 +17,7 @@ public class AuthorizeViewTest
 {
     // Nothing should exceed the timeout in a successful run of the the tests, this is just here to catch
     // failures.
-    private static readonly TimeSpan Timeout = Debugger.IsAttached ? System.Threading.Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan _timeout = Debugger.IsAttached ? System.Threading.Timeout.InfiniteTimeSpan : TimeSpan.FromSeconds(10);
 
     [Fact]
     public void RendersNothingIfNotAuthorized()
@@ -273,7 +273,7 @@ public class AuthorizeViewTest
         authTcs.SetResult(new AuthenticationState(new ClaimsPrincipal()));
 
         // We need to wait here because the continuations of SetResult will be scheduled to run asynchronously.
-        @event.Wait(Timeout);
+        @event.Wait(_timeout);
 
         Assert.Equal(2, renderer.Batches.Count);
         var batch2 = renderer.Batches[1];
@@ -380,7 +380,7 @@ public class AuthorizeViewTest
         authTcs.SetResult(CreateAuthenticationState("Monsieur").Result);
 
         // We need to wait here because the continuations of SetResult will be scheduled to run asynchronously.
-        @event.Wait(Timeout);
+        @event.Wait(_timeout);
 
         Assert.Equal(2, renderer.Batches.Count);
         var batch2 = renderer.Batches[1];
