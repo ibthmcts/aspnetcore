@@ -459,8 +459,8 @@ internal class Http2OutputProducer : IHttpOutputProducer, IHttpOutputAborter, IV
 
                         // Must decrement active stream count after flush is complete.
                         // If active stream count becomes zero while a graceful shutdown is in-progress then the input side of connection is closed.
-                        // This is a problem if a large amount of data is being written. The server to process incoming WINDOW_UPDATE frames.
-                        // No WINDOW_UPDATE frames means response write could hit backpresure, never complete, and the connection is forcefully closed.
+                        // This is a problem if a large amount of data is being written. The server must keep processing incoming WINDOW_UPDATE frames.
+                        // No WINDOW_UPDATE frames means response write could hit flow control and hang.
                         if (endStream)
                         {
                             _stream.DecrementActiveClientStreamCount();
